@@ -12,6 +12,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<Authentication>();
 //JWT«Å§i
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(option => {
     option.TokenValidationParameters = new TokenValidationParameters
@@ -39,7 +40,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CORS",
         builder =>
         {
-            builder.WithOrigins("http://localhost:3002")
+            builder.WithOrigins("http://localhost:3003")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });

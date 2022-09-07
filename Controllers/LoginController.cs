@@ -14,74 +14,26 @@ namespace MSSQLTEST.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
-        private ModelContext _context;
-        private IConfiguration _configuration;
-        public LoginController (ModelContext context ,IConfiguration configuration)
+        private Authentication _authentication;
+        public LoginController (Authentication authentication)
         {
-            _context = context;
-            _configuration = configuration;
+            _authentication = authentication;
         }
 
         // POST api/<LoginController>
         [HttpPost]
         public IActionResult Post([FromBody] LoginRequest login)
         {
-            var loginResult = (from a in _context.Users
-                               where a.UserId == login.User_id
-                               && a.Password == login.Password
-                               select a).SingleOrDefault();
-            if (loginResult == null)
+            LoginUser? user = _authentication.GetUser(login);
+            if (user == null)
             {
-                return BadRequest("帳號密碼錯誤");
+                return NotFound();
             }
             else
             {
-                //設定使用者資訊
-                var claims = new List<Claim>
-                {
-                    new Claim(JwtRegisteredClaimNames.NameId, login.User_id)
-                };
-
-                // var role = from a in _context.MngUserRoles
-                //            where a.UserId == user.UserId
-                //            select a;
-                // //設定Role
-                // foreach (var temp in role)
-                // {
-                //     claims.Add(new Claim(ClaimTypes.Role, temp.Name));
-                // }
-
-                //取出appsettings.json裡的KEY處理
-                var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["JWT:KEY"]));
-
-                //設定jwt相關資訊
-                var jwt = new JwtSecurityToken
-                (
-                    issuer: _configuration["JWT:Issuer"],
-                    audience: _configuration["JWT:Audience"],
-                    claims: claims,
-                    expires: DateTime.Now.AddMinutes(30),
-                    signingCredentials: new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)
-                );
-
-                //產生JWT Token
-                var token = new JwtSecurityTokenHandler().WriteToken(jwt);
-                //回傳JWT Token給認證通過的使用者
-                //return Ok(new LoginResponse {User_id=loginResult.UserId,Password=loginResult.Password,Email=loginResult.Email,Token=token});
-                return Ok(new LoginUser { User = new LoginResponse { User_id = loginResult.UserId, Password = loginResult.Password, Email =loginResult.Email,Token=token } });
-
+                return Ok(user);
             }
         }
-        // PUT api/<LoginController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
 
-        // DELETE api/<LoginController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }
